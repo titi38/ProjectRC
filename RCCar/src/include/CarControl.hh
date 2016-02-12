@@ -68,12 +68,14 @@ class CarControl
 
     void runReverse(unsigned short percent)
     {
-      int value = RC_REVERSE_MINVALUE + ( percent * (RC_REVERSE_MAXVALUE - RC_REVERSE_MINVALUE) ) / 100;
+      int value = RC_REVERSE_MAXVALUE - ( percent * (RC_REVERSE_MAXVALUE - RC_REVERSE_MINVALUE) ) / 100;
 
       pca9685->setPWM(throttleChan,value);
       if (!inReverse)
       {
-        usleep(500000);
+        usleep(200000);
+        pca9685->setPWM(throttleChan,0);
+        usleep(300000);
         pca9685->setPWM(throttleChan,value);
         inReverse = true;
       }
@@ -81,7 +83,7 @@ class CarControl
 
     void runForward(unsigned short percent)
     {
-      int value = RC_FORWARD_MINVALUE + ( percent * (RC_FORWARD_MINVALUE - RC_FORWARD_MINVALUE) ) / 100;
+      int value = RC_FORWARD_MINVALUE + ( percent * (RC_FORWARD_MAXVALUE - RC_FORWARD_MINVALUE) ) / 100;
 
       pca9685->setPWM(throttleChan,value);
       inReverse = false;
