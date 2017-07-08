@@ -45,14 +45,13 @@ namespace ProjectRC
 
   class RCControler
   {
-      CarControl carControl;
 
 
     public:
       RCControler(const char *configFile);
       ~RCControler();
 
-     void connect(RCCarItf_ptr);
+     void connectCar(RCCarItf_ptr);
      void logReport( const LogMessage& logmsg );
 
     private:
@@ -62,20 +61,23 @@ namespace ProjectRC
       Joystick *joystick;
 
       bool publishCorbaItf ( void );
-      void corbaInit();
+      bool corbaInit();
       int registerObjRefToNameservice(void);
       void unregisterObjRefsToNameservice(void);
       void shutdown();
       bool initJoystick();
       void runJoystick();
 
+      void disconnectCar();
 
+      char *refNameRCControlerServant;
 
       static RCControlerItf_ptr rcControlerItfRef;
       DaqApplication::AcquisitionORB *acquisitionOrb;
 
       static RCControlerItf_ptr RCControlerItfRef;
-      RCControlerItf_i* RCControlerItfServant;
+      RCControlerItf_i* rcControlerServant;
+      CORBA::Object_ptr RCControlerObjRef;
 
       static void* startingThreadJoystick(void *s);
 

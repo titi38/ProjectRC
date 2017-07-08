@@ -41,7 +41,7 @@ int ftime ( struct timeb *tp );
 #include <sys/time.h>
 #include <errno.h>
 
-
+#include <signal.h>
 
 #include <iostream>
 #include <unistd.h>
@@ -80,6 +80,13 @@ void printHelp ( const char *execname )
   printf ("  -C FILE\t Use given configuration file\n");
 
   fflush (NULL);
+}
+
+/***********************************************************************/
+
+void forceCleanExit ( int dummy )
+{
+  DaqApplication::AcquisitionORB::getInstance()->orbShutdown();
 }
 
 /************************************************************************/
@@ -128,14 +135,6 @@ int main ( int argc, char **argv )
 
 
 /***********************************************************************/
-
-void forceCleanExit ( int dummy )
-{
-  DaqApplication::AcquisitionORB::getInstance()->orbShutdown();
-}
-
-
-  /***********************************************************************/
 
  
 
@@ -204,7 +203,7 @@ namespace ProjectRC
             int len = rindex (value, '\"') - index (value, '\"') - 1;
             if ( len == -1 )
             {
-              fprintf (stderr, "\nERROR: refNameRCControler => interminated string in rccar.conf\n");
+              fprintf (stderr, "\nERROR: refNameRCControler => interminated string in rccontrol.conf\n");
               fflush (NULL);
               exit (EXIT_FAILURE);
             }
@@ -213,7 +212,7 @@ namespace ProjectRC
             strncpy (refNameRCControlerServant, value + strlen ("refNameRCControler=\""), len);
             *( refNameRCControlerServant + len ) = '\0';
 
-            printf ("* Set refNameRCControler to \'%s\'\n", refNameRCControler);
+            printf ("* Set refNameRCControler to \'%s\'\n", refNameRCControlerServant);
             isARCControlerOption = true;
           }
 
@@ -254,6 +253,8 @@ namespace ProjectRC
 
     // acquisition ORB et l'instance unique de la classe d'acc�s � l'ORB
     acquisitionOrb=DaqApplication::AcquisitionORB::getInstance();
+    rcCarItf = RCCarItf::_nil();
+
 
     if ( ! corbaInit() )
     {
@@ -271,15 +272,13 @@ namespace ProjectRC
     }
 
     pthread_t thread_joystick;
-    create_thread (&( this->thread_joystick ), RCCar::startingThreadJoystick,
+    create_thread (&( thread_joystick ), RCControler::startingThreadJoystick,
                    static_cast<void *>(this));
-
-    acquisitionProcessMgr->launchThread();
 
     acquisitionOrb->orbRun();
     exiting = true;
 
-    delete RCControlerServant;
+    delete rcControlerServant;
     shutdown();
 
     printf( "The ORB has been shuted down....\n" );
@@ -298,16 +297,17 @@ namespace ProjectRC
     if ( acquisitionOrb->activatePOAMgr( poa ) ) exit( 1 );
 
     // Creation des instances d'interfaces
-    RCControlerServant = new RCControlerItf_i( this );
+    rcControlerServant = new RCControlerItf_i( this );
 
     // On publie les objets distribues sur l'ORB
-    PortableServer::ObjectId_var RCControlerId = poa->activate_object( RCControlerServant );
-    RCControlerObjRef = RCControlerServant->_this();
-    RCControlerServant->_remove_ref();
+    PortableServer::ObjectId_var RCControlerId = poa->activate_object( rcControlerServant );
+    RCControlerObjRef = rcControlerServant->_this();
+    rcControlerServant->_remove_ref();
 
     if ( registerObjRefToNameservice() )
     {
-      LOG->append( NVJ_FATAL, "Problem using the Nameservice:\nCan't bind Object to Name" );
+      printf( RED "Problem using the Nameservice:\nCan't bind Object to Name" );
+      fflush(NULL);
       return false;
     }
 
@@ -315,10 +315,9 @@ namespace ProjectRC
   }
 
 
-
   /***********************************************************************/
 
-  void RCControler::corbaInit()
+  bool RCControler::corbaInit()
   {
     return ! acquisitionOrb->initORB();
   }
@@ -329,7 +328,7 @@ namespace ProjectRC
   {
     // On enregistre dans le NameService la References de ttsensorToTTdaqServant
 
-    printf("Record RCControlerServant as \'%s\' into the Corba's NameService\n", refNameRCControlerServant);
+    printf("Record rcControlerServant as \'%s\' into the Corba's NameService\n", refNameRCControlerServant);
 
     return acquisitionOrb->bindObjectToName(RCControlerObjRef, refNameRCControlerServant);
   }
@@ -384,7 +383,7 @@ namespace ProjectRC
 
       // Attempt to sample an event from the joystick
       JoystickEvent event;
-      if (connectedToRCCar && joystick->sample(&event))
+      if ( joystick->sample(&event) )
       {
         if (event.isButton())
         {
@@ -393,11 +392,12 @@ namespace ProjectRC
             event.value == 0 ? "up" : "down"); 
 */
         }
-        else if (event.isAxis())
+        else 
+        if (event.isAxis() && !CORBA::is_nil(rcCarItf))
         {
           try
           {
-            switch (event.number)
+            switch ( event.number )
             {
               case 0:
                 if (event.value>0)
@@ -422,7 +422,7 @@ namespace ProjectRC
                 printf("Brake : %d\n", 100-100* (event.value + 32768) / 65535);
                 break;
 
-              default:
+      //        default:
       //        printf("Axis %u is at position %d\n", event.number, event.value);
             }
           }
@@ -452,18 +452,12 @@ namespace ProjectRC
 
   /***********************************************************************/
 
-  void RCControler::connect(RCCarItf_ptr dsi)
+  void RCControler::connectCar(RCCarItf_ptr dsi)
   {
-   if ( connectedToRCCar )
-    {
+    if (!CORBA::is_nil(rcCarItf))
       CORBA::release (rcCarItf);
-      rcCarItf = DaqToSensorItf::_narrow (dsi);
-      //throw AlreadyConnectedException ();
-    }
-    else
-    {
-      rcCarItf = DaqToSensorItf::_narrow (dsi);
-      connectedToRCCar = true;
+
+    rcCarItf = RCCarItf::_narrow (dsi);
   }
 
   /***********************************************************************/
@@ -472,4 +466,20 @@ namespace ProjectRC
   {
   }
 
+  /***********************************************************************/
+
+  void RCControler::disconnectCar()
+  {
+    if (!CORBA::is_nil(rcCarItf))
+    {
+      try
+      {
+        rcCarItf->disconnect();
+      }
+      catch ( ... )
+      {
+      }
+      rcCarItf = RCCarItf::_nil();
+    }
+  }     
 };

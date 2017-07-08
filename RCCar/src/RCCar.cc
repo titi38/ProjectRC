@@ -157,7 +157,6 @@ namespace ProjectRC
     if (( configfile = fopen (configFile, "r")) == NULL )
     {
       fprintf (stderr, "\nERROR: could not read configuration file '%s'\n", configFile);
-      fflush (NULL);
       exit (EXIT_FAILURE);
     }
 
@@ -184,22 +183,21 @@ namespace ProjectRC
 
           char *value;
 
-          /* looks for the line containing "refNameRCControlerServant" */
-          if (( value = strstr (configLine, "refNameRCControlerServant=\"")) != NULL )
+          /* looks for the line containing "refNameRCControler" */
+          if (( value = strstr (configLine, "refNameRCControler=\"")) != NULL )
           {
             int len = rindex (value, '\"') - index (value, '\"') - 1;
             if ( len == -1 )
             {
-              fprintf (stderr, "\nERROR: refNameRCControlerServant => interminated string in rccar.conf\n");
-              fflush (NULL);
+              fprintf (stderr, "\nERROR: refNameRCControler => interminated string in rccar.conf\n");
               exit (EXIT_FAILURE);
             }
 
             refNameRCControlerServant = (char *) malloc (( len + 1 ) * sizeof (char));
-            strncpy (refNameRCControlerServant, value + strlen ("refNameRCControlerServant=\""), len);
+            strncpy (refNameRCControlerServant, value + strlen ("refNameRCControler=\""), len);
             *( refNameRCControlerServant + len ) = '\0';
 
-            printf ("* Set refNameRCControlerServant to \'%s\'\n", refNameRCControlerServant);
+            printf ("* Set refNameRCControler to \'%s\'\n", refNameRCControlerServant);
             isARCCarOption = true;
           }
 
@@ -208,7 +206,6 @@ namespace ProjectRC
         if ( !isARCCarOption && !isACorbaOption )
         {
           fprintf (stderr, "\nERROR: Line %d, unknown option %s\n", ligne, configLine);
-          fflush (NULL);
           exit (EXIT_FAILURE);
         }
       }
@@ -221,7 +218,6 @@ namespace ProjectRC
     if ( refNameRCControlerServant == NULL )
     {
       fprintf (stderr, "\nERROR: refNameRCControlerServant undefined in rccar.conf\n");
-      fflush (NULL);
       exit (EXIT_FAILURE);
     }
 
@@ -317,7 +313,7 @@ namespace ProjectRC
     char refname[30];
     if ( snprintf (refname, 30, "%s", refNameRCControlerServant) == -1 )
     {
-      printf ("refNameRCControlerServant is too long !\n");
+      printf ("refNameRCControler is too long !\n");
       fflush (NULL);
       exit (EXIT_FAILURE);
     }
@@ -358,19 +354,19 @@ namespace ProjectRC
       }
       catch ( CORBA::COMM_FAILURE &ex )
       {
-        printf ("An exception CORBA::COMM_FAILURE has been raised when trying to connect the Daq\n");
+        printf (RED "An exception CORBA::COMM_FAILURE has been raised when trying to connect the Daq\n");
         fflush (NULL);
       }
       catch ( CORBA::SystemException &ex )
       {
-        printf ("An exception CORBA::SystemException has been raised when trying to connect the Daq\n");
+        printf (RED "An exception CORBA::SystemException has been raised when trying to connect the Daq\n");
         fflush (NULL);
       }
 
       if ( !connected )
       {
         CORBA::release (rcControlerItfRef);
-        printf ("Failed to connect the Daq: Invalid CORBA reference => Wait 2 seconds before retrying ");
+        printf (RED "Failed to connect the Daq: Invalid CORBA reference => Wait 2 seconds before retrying ");
         fflush (NULL);
         sleep (2);
       }
@@ -446,7 +442,7 @@ namespace ProjectRC
 
   void RCCar::disconnect ()
   {
-    printf ("RCCar was disconnected by its Controler\n");
+    printf (GRN "RCCar was disconnected by its Controler\n");
     fflush (NULL);
 
     pthread_mutex_lock (&p_mut_connectManager);
@@ -471,6 +467,8 @@ namespace ProjectRC
 
   void RCCar::turnRight(::CORBA::UShort percent) throw (FailException)
   {
+    printf (GRN "turnRight: %u %%\n", percent);
+    fflush (NULL);
     carControl.turnRight(percent);
   }
 
@@ -478,6 +476,8 @@ namespace ProjectRC
 
   void RCCar::turnLeft(::CORBA::UShort percent) throw (FailException)
   {
+    printf (GRN "turnLeft: %u %%\n", percent);
+    fflush (NULL);
     carControl.turnLeft(percent);
   }
 
@@ -485,6 +485,8 @@ namespace ProjectRC
 
   void RCCar::runReverse(::CORBA::UShort percent) throw (FailException)
   {
+    printf (GRN "runReverse: %u %%\n", percent);
+    fflush (NULL);
     carControl.runReverse(percent);
   }
 
@@ -492,6 +494,8 @@ namespace ProjectRC
 
   void RCCar::runForward(::CORBA::UShort percent) throw (FailException)
   {
+    printf (GRN "runForward: %u %%\n", percent);
+    fflush (NULL);
     carControl.runForward(percent);
   }
 
@@ -499,106 +503,3 @@ namespace ProjectRC
 
 };
 
-
-/*
-
-
-
-
-
-
-
-int main()
-{
-  CarControl cc;
-
-  
-  // TEST DIRECTION
-  printf("TEST DIRECTION\n");
-  printf("--------------\n\n"); fflush(NULL);
-
-  printf("Turn Left: 50%%\n"); fflush(NULL);
-  cc.turnLeft(50);
-  sleep(1);
-
-  printf("Turn Left: 100%%\n"); fflush(NULL);
-  cc.turnLeft(100);
-  sleep(1);
-
-  printf("Center\n"); fflush(NULL);
-  cc.turnLeft(0);
-  sleep(5);
-
-  for (int i=100; i>=0; i--)
-  {
-    cc.turnLeft(i);
-    usleep(100000);
-  }
-  sleep(1);
-
-  printf("Turn Right: 50%%\n"); fflush(NULL);
-  cc.turnRight(50);
-  sleep(1);
-
-  printf("Turn Right: 100%%\n"); fflush(NULL);
-  cc.turnRight(100);
-  sleep(1);
-
-  printf("Center\n"); fflush(NULL);
-  cc.turnRight(0);
-  sleep(5);
-
-  for (int i=100; i>=0; i--)
-  {
-    cc.turnRight(i);
-    usleep(100000);
-  }
-  sleep(1);
-  
-  // TEST THROTTLE
-  printf("TEST THROTTLE\n");
-  printf("--------------\n\n"); fflush(NULL);
-
-  printf("Forward: 50%%\n"); fflush(NULL);
-  cc.runForward(50);
-  sleep(1);
-
-  printf("Forward: 100%%\n"); fflush(NULL);
-  cc.runForward(100);
-  sleep(1);
-
-  printf("Stopped\n"); fflush(NULL);
-  cc.runForward(0);
-  sleep(5);
-
-  for (int i=90; i>=0; i--)
-  {
-    cc.runForward(i);
-    usleep(100000);
-  }
-  sleep(1);
-
-
-  printf("Backward: 50%%\n"); fflush(NULL);
-  cc.runReverse(50);
-  sleep(1);
-
-  printf("Backward: 100%%\n"); fflush(NULL);
-  cc.runReverse(100);
-  sleep(1);
-
-  printf("Stopped\n"); fflush(NULL);
-  cc.runReverse(0);
-  sleep(5);
-
-  for (int i=90; i>=0; i--)
-  {
-    cc.runReverse(i);
-    usleep(100000);
-  }
-  sleep(1);
-
-
-
-  return 0;
-}*/

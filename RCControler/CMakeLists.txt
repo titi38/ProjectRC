@@ -8,7 +8,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 ####################         Project name           ###########################
-project(RCCar)
+project(RCControler)
 
 #################            version variables           ######################
 set(RCCAR_VERSION "1.0")
@@ -42,7 +42,7 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/../cmake.modules/")
 
 set (PROJECT_SOURCE_DIR src)
-set (CONTROLER_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../../RCControler/src)
+set (CAR_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../../RCCar/src)
 set (COMMON_SOURCE_DIR ${PROJECT_SOURCE_DIR}/../../daqCommonParts )
 set (PROJECT_SKELS_STUBS_DIR ${PROJECT_SOURCE_DIR}/genIDL )
 
@@ -59,29 +59,30 @@ find_package(Threads REQUIRED)
 
 include_directories ( 
   ${PROJECT_SOURCE_DIR}
-  ${PROJECT_SOURCE_DIR}/RCCarItf
-  ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/RCControlerItf
+  ${PROJECT_SOURCE_DIR}/joystick
   ${PROJECT_SOURCE_DIR}/genIDL
   ${PROJECT_SOURCE_DIR}/../..
-  ${CONTROLER_SOURCE_DIR}
+  ${CAR_SOURCE_DIR}
   )
 
 ###################             Sources files           #######################
 
 file(GLOB sources_cpp 
   ${PROJECT_SOURCE_DIR}/../../AcquisitionORB/AcquisitionORB.cc
-  ${PROJECT_SOURCE_DIR}/RCCarItf/RCCarItf_i.cc
-  ${PROJECT_SOURCE_DIR}/RCCar.cc
+  ${PROJECT_SOURCE_DIR}/RCControlerItf/RCControlerItf_i.cc
+  ${PROJECT_SOURCE_DIR}/RCControler.cc
+  ${PROJECT_SOURCE_DIR}/joystick/joystick.cc
   )
 
 set(sources_idl 
-  ${PROJECT_SOURCE_DIR}/RCCarItf/RCCarItf.idl
-  ${CONTROLER_SOURCE_DIR}/RCControlerItf/RCControlerItf.idl
+  ${PROJECT_SOURCE_DIR}/RCControlerItf/RCControlerItf.idl
+  ${CAR_SOURCE_DIR}/RCCarItf/RCCarItf.idl
   )
 
 set(include_directories_idl 
-  ${PROJECT_SOURCE_DIR}/RCCarItf
-  ${CONTROLER_SOURCE_DIR}/RCControlerItf
+  ${PROJECT_SOURCE_DIR}/RCControlerItf
+  ${CAR_SOURCE_DIR}/RCCarItf
   )
   
 ###################          Output directory          ########################
@@ -102,10 +103,10 @@ GENERATE_LIST_IDL_FILES( "${sources_idl}" )
 set_source_files_properties(${ALL_IDL_SKELS}
                             PROPERTIES GENERATED TRUE)
 
-add_executable( rccar ${ALL_IDL_SKELS} ${sources_cpp} )
+add_executable( rccontroler ${ALL_IDL_SKELS} ${sources_cpp} )
 
-target_link_libraries(rccar ${OMNIORB4_CLIENT_LIBRARIES})
-target_link_libraries(rccar ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(rccontroler ${OMNIORB4_CLIENT_LIBRARIES})
+target_link_libraries(rccontroler ${CMAKE_THREAD_LIBS_INIT})
 
 
 ######################### document file generation ############################

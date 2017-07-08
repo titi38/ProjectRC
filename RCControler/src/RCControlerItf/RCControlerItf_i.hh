@@ -33,7 +33,7 @@ namespace ProjectRC
 {
 class RCControler;
 
-class RCControlerItf_i : public POA_ProjectRC::SensorToDaqItf,
+class RCControlerItf_i : public POA_ProjectRC::RCControlerItf,
 			 public PortableServer::RefCountServantBase
 {
   RCControler* controler;
