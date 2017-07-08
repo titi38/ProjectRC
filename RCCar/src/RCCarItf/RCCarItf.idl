@@ -1,0 +1,48 @@
+//------------------------------------------------------------------------------
+//
+// RCCarItf.idl : Definition of the interface exported by RCCar
+//
+//------------------------------------------------------------------------------
+//
+// AUTHOR      : T.DESCOMBES (descombt@ipnl.in2p3.fr)
+// PROJECT     : ProjectRC
+//
+//------------------------------------------------------------------------------
+//           Versions and Editions  historic
+//------------------------------------------------------------------------------
+// Ver      | Ed  |   date   | resp.       | comment
+//----------+-----+----------+-------------+------------------------------------
+// 1        | 1   | 10/12/02 | T.DESCOMBES | source creation
+//----------+-----+----------+-------------+------------------------------------
+//
+//           Detailed modification operations on this source
+//------------------------------------------------------------------------------
+//  Date  :                            Author :
+//  REL   :
+//  Description :
+//
+//------------------------------------------------------------------------------
+
+
+#ifndef __RCCARITF_IDL__
+#define __RCCARITF_IDL__
+
+
+module ProjectRC
+{
+  exception FailException { };
+
+  interface RCCarItf
+  {
+    void disconnect();
+
+    // Car Controls
+    void  turnRight(in unsigned short percent)  raises (FailException);
+    void  turnLeft(in unsigned short percent)   raises (FailException);
+    void  runReverse(in unsigned short percent) raises (FailException);
+    void  runForward(in unsigned short percent) raises (FailException);
+  };
+};
+
+#endif 
+

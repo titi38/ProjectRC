@@ -1,0 +1,58 @@
+//------------------------------------------------------------------------------
+//
+// SensorToDaqItf.idl : Definition of the interface from Sensor to Daq
+//
+//------------------------------------------------------------------------------
+//
+// AUTHOR      : T.DESCOMBES (descombt@ipnl.in2p3.fr)
+// PROJECT     : EventBuilder
+//
+//------------------------------------------------------------------------------
+//           Versions and Editions  historic
+//------------------------------------------------------------------------------
+// Ver      | Ed  |   date   | resp.       | comment
+//----------+-----+----------+-------------+------------------------------------
+// 1        | 1   | 10/12/02 | T.DESCOMBES | source creation
+//----------+-----+----------+-------------+------------------------------------
+//
+//           Detailed modification operations on this source
+//------------------------------------------------------------------------------
+//  Date  :                            Author :
+//  REL   :
+//  Description :
+//
+//------------------------------------------------------------------------------
+
+#ifndef __RCCONTROLERITF_IDL__
+#define __RCCONTROLERITF_IDL__
+
+#include "RCCarItf.idl"
+
+
+module ProjectRC
+{
+
+  enum LogKind
+  {
+    INFO,
+    WARNING,
+    ERROR,
+    FATAL
+  };
+
+  struct LogMessage
+  {
+    LogKind kind;
+    string  message;
+  };
+
+  
+  interface RCControlerItf
+  {
+    void connect(in RCCarItf dsi);
+    void ping();
+    void logReport(in LogMessage logmsg);
+  };
+};
+
+#endif
