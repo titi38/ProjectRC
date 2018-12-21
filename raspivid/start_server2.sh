@@ -1,0 +1,1 @@
+gst-launch-1.0 udpsrc port=5000  ! "application/x-rtp,media=(string)video,clock-rate=(int)90000,encoding-name=(string)JPEG,a-framerate=(string)40.000000,a-framesize=(string)1280-720,payload=(int)26" ! rtpjpegdepay ! decodebin ! autovideosink

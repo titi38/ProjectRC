@@ -320,7 +320,7 @@ namespace ProjectRC
 
     while ( CORBA::is_nil (( objref = acquisitionOrb->getObjectReference (refname))))
     {
-      printf ("No reference with the name \"%s\" was found into the NameService => Wait 2 seconds before retrying ",
+      printf ("No reference with the name \"%s\" was found into the NameService => Wait 2 seconds before retrying\n",
               refname);
       fflush (NULL);
       sleep (2);
